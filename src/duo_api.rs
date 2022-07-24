@@ -41,14 +41,14 @@ pub struct UserCredentialsData {
 /// that will be appended to the [`BASE_URL`] for all subsequent requests.
 #[derive(Deserialize)]
 pub struct UserCreationResponse {
-    id: String,
+    id: u32,
 }
 
 /// All relevant data from creating the user needed to create credentials. This
 /// includes the user ID and the JWT token returned from the API when creating
 /// the user.
 pub struct AccountData {
-    id: String,
+    id: u32,
     token: String,
 }
 
@@ -57,12 +57,7 @@ impl AccountData {
     /// a form of authentication, and then deserializes the response as JSON to
     /// retrieve the user id.
     pub async fn from(res: Response) -> Result<Self, Error> {
-        let token = res
-            .cookies()
-            .find(|cookie| cookie.name() == "jwt_token")
-            .map(|cookie| cookie.value().to_string())
-            .unwrap();
-
+        let token = res.headers()["jwt"].to_str().unwrap().to_owned();
         let id = res.json::<UserCreationResponse>().await?.id;
         Ok(Self { id, token })
     }
