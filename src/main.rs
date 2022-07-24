@@ -20,6 +20,7 @@ use std::time::Instant;
 
 use clap::{value_parser, AppSettings, Parser};
 use indicatif::ProgressBar;
+use reqwest::Error;
 
 pub mod duo_api;
 use crate::duo_api::DuoApi;
@@ -48,7 +49,7 @@ struct Args {
 
 /// CLI entrypoint.
 #[tokio::main]
-async fn main() -> Result<(), Box<dyn std::error::Error>> {
+async fn main() -> Result<(), Error> {
     let args = Args::parse();
     let now = Instant::now();
     let bar = ProgressBar::new(args.num.into());
