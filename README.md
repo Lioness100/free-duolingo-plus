@@ -1,13 +1,13 @@
 # Free Duolingo Plus
 
 A simple CLI tool to create dummy accounts with referral links to give yourself
-free Plus (max 24 weeks).
+free Plus (max 19 weeks).
 
 > ⚠️ A VPN must used to run this tool as Duolingo will not
 > consider accounts created with the same IP as the original towards the referral
 > program.
 
-> ⚠️ This tool is untested and should be used at your own risk.
+> ⚠️ Use at your own risk.
 
 ## Installation
 
