@@ -31,6 +31,11 @@ free-duolingo-plus --code="ASDFGHJKL1234567890QWERTY" --num=3
 free-duolingo-plus -c="ASDFGHJKL1234567890QWERTY" --n=3
 ```
 
+!["You earned 19 weeks of free Duoling
+Plus!"](https://user-images.githubusercontent.com/65814829/180655454-56f8855f-b279-4509-af50-d7c91ec41530.png)
+
+Please ⭐ this repository if this works for you!
+
 ## Acknowledgements
 
 The strategy was taken from https://github.com/JunkMeal/duolingo-plus and ported
