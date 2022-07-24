@@ -14,9 +14,8 @@ clap = { version = "3.2.14", features = ["derive"] }
 fake = "2.5.0"
 indicatif = "0.16.2"
 rand = "0.8.5"
-reqwest = { version = "0.11.11", features = ["json"] }
+reqwest = { version = "0.11.11", features = ["json", "blocking"] }
 serde = { version = "1.0.140", features = ["derive"] }
-tokio = { version = "1.20.0", features = ["full"] }
 uuid = { version = "1.1.2", features = ["v4"] }
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html

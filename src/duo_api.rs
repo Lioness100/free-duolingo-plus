@@ -4,7 +4,10 @@ use fake::{
     faker::internet::en::{FreeEmail, Password},
     Fake,
 };
-use reqwest::{Client, ClientBuilder, Error, Response};
+use reqwest::{
+    blocking::{Client, ClientBuilder, Response},
+    Error,
+};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
@@ -56,9 +59,9 @@ impl AccountData {
     /// Finds the JWT token from the request to be reused on the next request as
     /// a form of authentication, and then deserializes the response as JSON to
     /// retrieve the user id.
-    pub async fn from(res: Response) -> Result<Self, Error> {
+    pub fn from(res: Response) -> Result<Self, Error> {
         let token = res.headers()["jwt"].to_str().unwrap().to_owned();
-        let id = res.json::<UserCreationResponse>().await?.id;
+        let id = res.json::<UserCreationResponse>()?.id;
         Ok(Self { id, token })
     }
 }
@@ -90,7 +93,7 @@ impl DuoApi {
 
     /// Creates a new user via the provided referral code (see
     /// [`UserCreationData`]), and constructs a [`AccountData`] from it.
-    pub async fn create_account(&self, code: String) -> Result<AccountData, Error> {
+    pub fn create_account(&self, code: String) -> Result<AccountData, Error> {
         let uuid = Uuid::new_v4().to_string();
 
         let creation_data = UserCreationData {
@@ -104,14 +107,13 @@ impl DuoApi {
             .client
             .post(format!("{}?fields=id", BASE_URL))
             .json(&creation_data)
-            .send()
-            .await?;
+            .send()?;
 
-        Ok(AccountData::from(res).await?)
+        Ok(AccountData::from(res)?)
     }
 
     /// Creates credentials for the user (see [`UserCredentialsData`]) from [`AccountData`].
-    pub async fn create_credentials(&self, data: AccountData) -> Result<(), Error> {
+    pub fn create_credentials(&self, data: AccountData) -> Result<(), Error> {
         let user_data = UserCredentialsData {
             age: "5".into(),
             email: FreeEmail().fake(),
@@ -122,8 +124,7 @@ impl DuoApi {
             .patch(format!("{}/{}?fields=none", BASE_URL, data.id))
             .header("Cookie", format!("jwt_token={}", data.token))
             .json(&user_data)
-            .send()
-            .await?;
+            .send()?;
 
         Ok(())
     }

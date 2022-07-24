@@ -52,8 +52,7 @@ struct Args {
 }
 
 /// CLI entrypoint.
-#[tokio::main]
-async fn main() -> Result<(), Error> {
+fn main() -> Result<(), Error> {
     let args = Args::parse();
     let now = Instant::now();
     let bar = ProgressBar::new(args.num.into());
@@ -62,8 +61,8 @@ async fn main() -> Result<(), Error> {
     for _ in 1..=args.num {
         // To setup an account, you first need to create it, and then send a
         // patch request to create credentials (which obviously won't be used).
-        let data = client.create_account(args.code.to_owned()).await?;
-        client.create_credentials(data).await?;
+        let data = client.create_account(args.code.to_owned())?;
+        client.create_credentials(data)?;
 
         bar.inc(1);
     }
