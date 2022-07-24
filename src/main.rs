@@ -20,10 +20,8 @@
 //! free-duolingo-plus -c="ASDFGHJKL1234567890QWERTY" --n=3
 //! ```
 
-use std::time::Instant;
-
 use clap::{value_parser, AppSettings, Parser};
-use indicatif::ProgressBar;
+use indicatif::{ProgressBar, ProgressStyle};
 use reqwest::Error;
 
 pub mod duo_api;
@@ -54,19 +52,26 @@ struct Args {
 /// CLI entrypoint.
 fn main() -> Result<(), Error> {
     let args = Args::parse();
-    let now = Instant::now();
-    let bar = ProgressBar::new(args.num.into());
     let client = DuoApi::new();
+
+    let bar_style = ProgressStyle::default_bar()
+        .template("[{elapsed_precise}] [{pos}/{len}] {bar:70.cyan/blue}");
+
+    let bar = ProgressBar::new(args.num.into()).with_style(bar_style);
 
     for _ in 1..=args.num {
         // To setup an account, you first need to create it, and then send a
         // patch request to create credentials (which obviously won't be used).
         let data = client.create_account(args.code.to_owned())?;
         client.create_credentials(data)?;
-
         bar.inc(1);
     }
 
-    bar.finish_with_message(format!("All accounts created in {:.2?}!", now.elapsed()));
+    bar.finish();
+    println!(
+        "All accounts created! Enjoy your {} weeks of free Duolingo Plus.\nhttps://www.duolingo.com/",
+        args.num
+    );
+
     Ok(())
 }
