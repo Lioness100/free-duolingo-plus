@@ -1,6 +1,6 @@
 [package]
 name = "free-duolingo-plus"
-version = "1.0.3"
+version = "1.0.4"
 authors = ["Lioness100 <jchickmm2@gmail.com>"]
 edition = "2021"
 description = "Simple CLI tool to create dummy accounts with referral links to give yourself free Plus."
@@ -11,6 +11,7 @@ categories = ["command-line-utilities"]
 
 [dependencies]
 clap = { version = "3.2.14", features = ["derive"] }
+console = "0.15.0"
 fake = "2.5.0"
 indicatif = "0.16.2"
 rand = "0.8.5"
