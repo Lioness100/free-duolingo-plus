@@ -36,13 +36,31 @@ free-duolingo-plus --code="ASDFGHJKL1234567890QWERTY" --num=3
 free-duolingo-plus -c="ASDFGHJKL1234567890QWERTY" --n=3
 ```
 
-<br>
-<p align="center"><img alt='"You earned 19 weeks of free Duoling
-Plus!"' src="https://user-images.githubusercontent.com/65814829/180655454-56f8855f-b279-4509-af50-d7c91ec41530.png"
-width="153.5" height="358.5"><img alt='"You earned 41 weeks of free Duoling
-Plus!"' src="https://user-images.githubusercontent.com/65814829/180673748-af68696e-f418-4728-a733-ae3be23b5e94.png"
-    width="153.5" height="358"></p>
-<br>
+<br />
+<p align="center">
+  <img
+    alt='"You earned 19 weeks of free Duolingo
+Plus!"'
+    src="https://user-images.githubusercontent.com/65814829/180655454-56f8855f-b279-4509-af50-d7c91ec41530.png"
+    width="153.5"
+    height="358.5"
+  />
+  <img
+    alt='"You earned 41 weeks of free Duolingo
+Plus!"'
+    src="https://user-images.githubusercontent.com/65814829/180673748-af68696e-f418-4728-a733-ae3be23b5e94.png"
+    width="153.5"
+    height="358.5"
+  />
+  <img
+    alt='"You earned 4 weeks of free Duolingo
+Plus!"'
+    src="https://user-images.githubusercontent.com/65814829/180692533-399b59ea-9775-469f-b788-fdf9bb018c44.png"
+    width="153.5"
+    height="358.5"
+  />
+</p>
+<br />
 
 Please ⭐ this repository if this works for you!
 
