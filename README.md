@@ -1,4 +1,4 @@
-### This branch creates each profile in parallel, which is much faster but turns out to be quite janky and a lot of te time not all free weeks are registered.
+### This branch creates each profile in parallel, which is much faster but turns out to be quite janky and a lot of the time not all free weeks are registered.
 
 <br />
 <p align="center">
