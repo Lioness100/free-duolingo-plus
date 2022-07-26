@@ -1,5 +1,5 @@
 //! A simple CLI tool to create dummy accounts with referral links to give yourself
-//! free Plus (max 19 weeks).
+//! free Plus (max 24/41 weeks).
 //!
 //! > ⚠️ A VPN must used to run this tool as Duolingo will not
 //! > consider accounts created with the same IP as the original towards the referral
@@ -43,9 +43,9 @@ struct Args {
     #[clap(
         short,
         long,
-        help = "The number of accounts to generate (max 19)",
-        default_value_t = 19,
-        value_parser = value_parser!(u8).range(1..=19)
+        help = "The number of accounts to generate (max 24)",
+        default_value_t = 24,
+        value_parser = value_parser!(u8).range(1..=24)
     )]
     num: u8,
 }
