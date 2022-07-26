@@ -1,27 +1,16 @@
 //! Exports [`DuoApi`] for all API related functionality.
 
-use std::collections::HashMap;
-
 use fake::{
     faker::internet::en::{FreeEmail, Password},
     Fake,
 };
-use reqwest::{
-    blocking::{Client, ClientBuilder, Response},
-    redirect::Policy,
-    Error, Url,
-};
+use reqwest::{redirect::Policy, Client, ClientBuilder, Error, Response};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 /// The API used to create and patch users. This specific API version is the
 /// only one that supports this strategy.
 pub const BASE_USERS_URL: &str = "https://www.duolingo.com/2017-06-30/users";
-
-/// The API used to request data on how many more free weeks of Plus they can
-/// claim and to actually accept a duolingo invite, which is used to find the
-/// original user's ID.
-pub const BASE_INVITE_URL: &str = "https://invite.duolingo.com";
 
 /// User-Agent header used for all requests.
 pub const USER_AGENT: &str = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/51.0.2704.79 Safari/537.36 Edge/14.14393";
@@ -55,14 +44,6 @@ pub struct UserCreationResponse {
     id: u32,
 }
 
-/// The data returned from the API representing the additional number of free
-/// weeks of Plus available to the user.
-#[derive(Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct InviteStatusResponse {
-    num_weeks_available: u8,
-}
-
 /// All relevant data from creating the user needed to create credentials. This
 /// includes the user ID and the JWT token returned from the API when creating
 /// the user.
@@ -75,15 +56,16 @@ impl AccountData {
     /// Finds the JWT token from the request to be reused on the next request as
     /// a form of authentication, and then deserializes the response as JSON to
     /// retrieve the user id.
-    pub fn from(res: Response) -> Result<Self, Error> {
+    pub async fn from(res: Response) -> Result<Self, Error> {
         let token = res.headers()["jwt"].to_str().unwrap().to_owned();
-        let id = res.json::<UserCreationResponse>()?.id;
+        let id = res.json::<UserCreationResponse>().await?.id;
         Ok(Self { id, token })
     }
 }
 
 /// Stores the [`reqwest::Client`] used to make requests to the API and all
 /// functionality relevant to sending requests to the API.
+#[derive(Clone)]
 pub struct DuoApi {
     client: Client,
 }
@@ -115,7 +97,7 @@ impl DuoApi {
 
     /// Creates a new user via the provided referral code (see
     /// [`UserCreationData`]), and constructs a [`AccountData`] from it.
-    pub fn create_account(&self, code: &str) -> Result<AccountData, Error> {
+    pub async fn create_account(&self, code: &str) -> Result<AccountData, Error> {
         let uuid = Uuid::new_v4().to_string();
 
         let creation_data = UserCreationData {
@@ -129,13 +111,14 @@ impl DuoApi {
             .client
             .post(format!("{BASE_USERS_URL}?fields=id"))
             .json(&creation_data)
-            .send()?;
+            .send()
+            .await?;
 
-        Ok(AccountData::from(res)?)
+        Ok(AccountData::from(res).await?)
     }
 
     /// Creates credentials for the user (see [`UserCredentialsData`]) from [`AccountData`].
-    pub fn create_credentials(&self, data: &AccountData) -> Result<(), Error> {
+    pub async fn create_credentials(&self, data: &AccountData) -> Result<(), Error> {
         let user_data = UserCredentialsData {
             age: "5".into(),
             email: FreeEmail().fake(),
@@ -146,52 +129,9 @@ impl DuoApi {
             .patch(format!("{BASE_USERS_URL}/{}?fields=none", data.id))
             .header("Cookie", format!("jwt_token={}", data.token))
             .json(&user_data)
-            .send()?;
+            .send()
+            .await?;
 
         Ok(())
-    }
-
-    /// Gets the ID of the original user from the referral code by requesting
-    /// the referral link (based from [`BASE_INVITE_URL`]), which will redirect
-    /// you to the main duolingo domain with metadata such as `inviter_id` in
-    /// the query string. It will then redirect again, which we don't want, so
-    /// we instead disable all redirects and parse the URL we want from the
-    /// location header.
-    pub fn get_user_id(&self, code: &str) -> Result<String, Error> {
-        let res = self
-            .client
-            .get(format!("{BASE_INVITE_URL}/{code}"))
-            .send()?;
-
-        let location_header = res.headers()["location"]
-            .to_str()
-            .unwrap()
-            // The duolingo URL we want is actually an encoded query string
-            // value, so we apply basic decoding to get `inviter_id` into the
-            // pairs detected by [`reqwest::Url::query_pairs`].
-            .replace("%26", "&")
-            .replace("%3D", "=");
-
-        let redirect_url = Url::parse(&location_header).unwrap();
-        let query_params: HashMap<_, _> = redirect_url.query_pairs().into_owned().collect();
-
-        Ok(query_params["inviter_id"].to_owned())
-    }
-
-    /// Finds out the additional number of free weeks of Plus available to the user.
-    pub fn check_invites_left(&self, data: &AccountData, code: &str) -> Result<u8, Error> {
-        let url = format!(
-            "{BASE_INVITE_URL}/user/{}/tiered-rewards/status",
-            self.get_user_id(code)?
-        );
-
-        let res: InviteStatusResponse = self
-            .client
-            .get(url)
-            .header("Cookie", format!("jwt_token={}", data.token))
-            .send()?
-            .json()?;
-
-        Ok(res.num_weeks_available)
     }
 }

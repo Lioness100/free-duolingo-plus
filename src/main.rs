@@ -22,8 +22,8 @@
 
 use clap::{value_parser, AppSettings, Parser};
 use console::style;
+use futures::future;
 use indicatif::{ProgressBar, ProgressStyle};
-use reqwest::Error;
 
 pub mod duo_api;
 use crate::duo_api::DuoApi;
@@ -51,55 +51,33 @@ struct Args {
 }
 
 /// CLI entrypoint.
-fn main() -> Result<(), Error> {
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args = Args::parse();
     let client = DuoApi::new();
 
-    let bar_style =
-        ProgressStyle::default_bar().template("[{elapsed_precise}] [{pos}/{len}] {bar:70.cyan}");
+    let bar = ProgressBar::new(args.num.into()).with_style(
+        ProgressStyle::default_bar().template("[{elapsed_precise}] [{pos}/{len}] {bar:70.cyan}"),
+    );
 
-    let bar = ProgressBar::new(args.num.into()).with_style(bar_style);
+    let futures = (0..args.num).map(|_| {
+        let code = args.code.clone();
+        let client = client.clone();
+        let bar = bar.clone();
 
-    let mut accounts_created: u8 = 0;
-    let mut invites_left = args.num;
+        tokio::spawn(async move {
+            let data = client.create_account(&code).await.unwrap();
+            client.create_credentials(&data).await.unwrap();
+            bar.inc(1);
+        })
+    });
 
-    while invites_left > 0 {
-        // To setup an account, you first need to create it, and then send a
-        // patch request to create credentials (which obviously won't be used).
-        let data = client.create_account(&args.code)?;
-        client.create_credentials(&data)?;
-
-        accounts_created += 1;
-        invites_left -= 1;
-
-        // Once an account is created, we can use it's credentials to double
-        // check how many more valid invites the user has left as a subtle
-        // safety check. This is only necessary to do once. If the user only
-        // wanted one invite, this isn't necessary at all.
-        if accounts_created == 1 && invites_left > 0 {
-            let num_weeks_available = client.check_invites_left(&data, &args.code)?;
-
-            if num_weeks_available < invites_left {
-                invites_left = num_weeks_available;
-
-                let msg = format!(
-                    "You only have {} valid invite(s) left, so `num` was modified accordingly.",
-                    invites_left + 1
-                );
-
-                bar.println(style(msg).on_red().to_string());
-                bar.set_length((invites_left + 1).into());
-            }
-        }
-
-        bar.inc(1);
-    }
-
+    future::try_join_all(futures).await?;
     bar.finish();
 
     println!(
         "All accounts created! Enjoy your {} weeks of free Duolingo Plus.\n{}",
-        style(accounts_created).green().bold(),
+        style(args.num).green().bold(),
         style("https://www.duolingo.com/").dim()
     );
 
