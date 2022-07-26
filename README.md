@@ -1,5 +1,5 @@
 <br />
-<p align="center">
+<div align="center">
   <img
     alt='"You earned 19 weeks of free Duolingo
 Plus!"'
@@ -28,7 +28,14 @@ Plus!"'
     width="153.5"
     height="358.5"
   />
-</p>
+  <img
+    alt='"You earned 24 weeks of free Duolingo
+Plus!"'
+    src="https://user-images.githubusercontent.com/65814829/181112449-04206666-fb3a-4bcf-a300-c8f8995d5327.png"
+    width="153.5"
+    height="358.5"
+  />
+</div>
 <br />
 
 # Free Duolingo Plus
