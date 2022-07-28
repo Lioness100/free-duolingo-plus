@@ -57,7 +57,11 @@ impl AccountData {
     /// a form of authentication, and then deserializes the response as JSON to
     /// retrieve the user id.
     pub async fn from(res: Response) -> Result<Self, Error> {
-        let token = res.headers()["jwt"].to_str().unwrap().to_owned();
+        let token = res.headers()["jwt"]
+            .to_str()
+            .expect("JWT token was not found in the account creation response headers")
+            .to_owned();
+
         let id = res.json::<UserCreationResponse>().await?.id;
         Ok(Self { id, token })
     }

@@ -66,8 +66,16 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         let bar = bar.clone();
 
         tokio::spawn(async move {
-            let data = client.create_account(&code).await.unwrap();
-            client.create_credentials(&data).await.unwrap();
+            let data = client
+                .create_account(&code)
+                .await
+                .expect("Failed to create account");
+
+            client
+                .create_credentials(&data)
+                .await
+                .expect("Failed to create credentials");
+
             bar.inc(1);
         })
     });
