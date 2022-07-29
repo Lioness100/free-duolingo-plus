@@ -130,7 +130,8 @@ impl DuoApi {
             .client
             .post(format!("{BASE_USERS_URL}?fields=id"))
             .json(&creation_data)
-            .send()?;
+            .send()?
+            .error_for_status()?;
 
         Ok(AccountData::from(res)?)
     }
@@ -147,7 +148,8 @@ impl DuoApi {
             .patch(format!("{BASE_USERS_URL}/{}?fields=none", data.id))
             .header(COOKIE, format!("jwt_token={}", data.token))
             .json(&user_data)
-            .send()?;
+            .send()?
+            .error_for_status()?;
 
         Ok(())
     }
@@ -191,6 +193,7 @@ impl DuoApi {
             .get(url)
             .header(COOKIE, format!("jwt_token={}", data.token))
             .send()?
+            .error_for_status()?
             .json()?;
 
         Ok(res.num_weeks_available)
