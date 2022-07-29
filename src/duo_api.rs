@@ -3,7 +3,7 @@
 use std::collections::HashMap;
 
 use fake::{
-    faker::internet::en::{FreeEmail, Password},
+    faker::internet::en::{FreeEmail, Password, UserAgent},
     Fake,
 };
 use reqwest::{
@@ -23,9 +23,6 @@ pub const BASE_USERS_URL: &str = "https://www.duolingo.com/2017-06-30/users";
 /// claim and to actually accept a duolingo invite, which is used to find the
 /// original user's ID.
 pub const BASE_INVITE_URL: &str = "https://invite.duolingo.com";
-
-/// User-Agent header used for all requests.
-pub const USER_AGENT: &str = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/51.0.2704.79 Safari/537.36 Edge/14.14393";
 
 /// The data sent to the API to create a user. `timezone` and `from_language`
 /// are dummy values, but `invite_code` is the provided code and `distinct_id`
@@ -95,7 +92,7 @@ impl DuoApi {
         Self {
             client: ClientBuilder::new()
                 // The user agent will make the request look less like a bot's.
-                .user_agent(USER_AGENT)
+                .user_agent(UserAgent().fake::<&str>())
                 // [`DuoApi::get_user_id`] makes a request that will try to redirect the user, which we don't want.
                 .redirect(Policy::none())
                 .build()
