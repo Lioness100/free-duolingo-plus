@@ -8,6 +8,7 @@ use fake::{
 };
 use reqwest::{
     blocking::{Client, ClientBuilder, Response},
+    header::COOKIE,
     redirect::Policy,
     Error, Url,
 };
@@ -144,7 +145,7 @@ impl DuoApi {
 
         self.client
             .patch(format!("{BASE_USERS_URL}/{}?fields=none", data.id))
-            .header("Cookie", format!("jwt_token={}", data.token))
+            .header(COOKIE, format!("jwt_token={}", data.token))
             .json(&user_data)
             .send()?;
 
@@ -188,7 +189,7 @@ impl DuoApi {
         let res: InviteStatusResponse = self
             .client
             .get(url)
-            .header("Cookie", format!("jwt_token={}", data.token))
+            .header(COOKIE, format!("jwt_token={}", data.token))
             .send()?
             .json()?;
 
