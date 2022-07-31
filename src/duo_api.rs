@@ -114,13 +114,11 @@ impl DuoApi {
     /// Creates a new user via the provided referral code (see
     /// [`UserCreationData`]), and constructs a [`AccountData`] from it.
     pub fn create_account(&self, code: &str) -> Result<AccountData, Error> {
-        let uuid = Uuid::new_v4().to_string();
-
         let creation_data = UserCreationData {
-            timezone: "America/Montreal".into(),
-            from_language: "en".into(),
-            invite_code: code.into(),
-            distinct_id: uuid.into(),
+            timezone: String::from("America/Montreal"),
+            from_language: String::from("en"),
+            invite_code: code.to_owned(),
+            distinct_id: Uuid::new_v4().to_string(),
         };
 
         let res = self
@@ -130,7 +128,7 @@ impl DuoApi {
             .send()?
             .error_for_status()?;
 
-        Ok(AccountData::from(res)?)
+        AccountData::from(res)
     }
 
     /// Creates credentials for the user (see [`UserCredentialsData`]) from [`AccountData`].
