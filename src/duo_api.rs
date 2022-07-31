@@ -86,9 +86,9 @@ pub struct DuoApi {
     client: Client,
 }
 
-impl DuoApi {
+impl Default for DuoApi {
     /// Creates a new API client with a reusable User-Agent.
-    pub fn new() -> Self {
+    fn default() -> Self {
         Self {
             client: ClientBuilder::new()
                 // The user agent will make the request look less like a bot's.
@@ -99,7 +99,9 @@ impl DuoApi {
                 .unwrap(),
         }
     }
+}
 
+impl DuoApi {
     /// Validates a referral code. It must be a 26-length string of
     /// ascii_alphanumeric characters. After validated, the string will be
     /// converted to uppercase.

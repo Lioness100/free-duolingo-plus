@@ -53,7 +53,7 @@ struct Args {
 /// CLI entrypoint.
 fn main() -> Result<(), Error> {
     let args = Args::parse();
-    let client = DuoApi::new();
+    let client = DuoApi::default();
 
     let bar_style =
         ProgressStyle::default_bar().template("[{elapsed_precise}] [{pos}/{len}] {bar:70.cyan}");
