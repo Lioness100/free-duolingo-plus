@@ -10,7 +10,7 @@ use reqwest::{
     blocking::{Client, ClientBuilder, Response},
     header::COOKIE,
     redirect::Policy,
-    Error, Url,
+    Url,
 };
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
@@ -73,10 +73,18 @@ impl AccountData {
     /// Finds the JWT token from the request to be reused on the next request as
     /// a form of authentication, and then deserializes the response as JSON to
     /// retrieve the user id.
-    pub fn from(res: Response) -> Result<Self, Error> {
-        let token = res.headers()["jwt"].to_str().unwrap().to_owned();
-        let id = res.json::<UserCreationResponse>()?.id;
-        Ok(Self { id, token })
+    pub fn from(res: Response) -> Self {
+        let token = res.headers()["jwt"]
+            .to_str()
+            .expect("JWT token was not found in the account creation response headers")
+            .to_string();
+
+        let id = res
+            .json::<UserCreationResponse>()
+            .expect("Failed to parse user creation response")
+            .id;
+
+        Self { id, token }
     }
 }
 
@@ -102,24 +110,26 @@ impl Default for DuoApi {
 }
 
 impl DuoApi {
-    /// Validates a referral code. It must be a 26-length string of
+    /// Validates a referral code. If a link is given, the base will be
+    /// stripped, leaving (hopefully) just the code. It must be a 26-length string of
     /// ascii_alphanumeric characters. After validated, the string will be
     /// converted to uppercase.
-    pub fn is_valid_code(code: &str) -> Result<String, String> {
-        if code.len() == 26 && code.chars().all(|c| c.is_ascii_alphanumeric()) {
-            Ok(code.to_uppercase())
+    pub fn parse_code(code: &str) -> Result<String, String> {
+        let parsed_code = code.replace(&format!("{BASE_INVITE_URL}/"), "");
+        if parsed_code.len() == 26 && parsed_code.chars().all(|c| c.is_ascii_alphanumeric()) {
+            Ok(parsed_code.to_uppercase())
         } else {
-            Err("Invalid referral code".to_owned())
+            Err(String::from("Invalid referral code/link"))
         }
     }
 
     /// Creates a new user via the provided referral code (see
     /// [`UserCreationData`]), and constructs a [`AccountData`] from it.
-    pub fn create_account(&self, code: &str) -> Result<AccountData, Error> {
+    pub fn create_account(&self, code: &str) -> AccountData {
         let creation_data = UserCreationData {
             timezone: String::from("America/Montreal"),
             from_language: String::from("en"),
-            invite_code: code.to_owned(),
+            invite_code: code.to_string(),
             distinct_id: Uuid::new_v4().to_string(),
         };
 
@@ -127,16 +137,18 @@ impl DuoApi {
             .client
             .post(format!("{BASE_USERS_URL}?fields=id"))
             .json(&creation_data)
-            .send()?
-            .error_for_status()?;
+            .send()
+            .unwrap()
+            .error_for_status()
+            .expect("Failed to create account");
 
         AccountData::from(res)
     }
 
     /// Creates credentials for the user (see [`UserCredentialsData`]) from [`AccountData`].
-    pub fn create_credentials(&self, data: &AccountData) -> Result<(), Error> {
+    pub fn create_credentials(&self, data: &AccountData) {
         let user_data = UserCredentialsData {
-            age: "5".into(),
+            age: String::from("5"),
             email: FreeEmail().fake(),
             password: Password(15..16).fake(),
         };
@@ -145,10 +157,10 @@ impl DuoApi {
             .patch(format!("{BASE_USERS_URL}/{}?fields=none", data.id))
             .header(COOKIE, format!("jwt_token={}", data.token))
             .json(&user_data)
-            .send()?
-            .error_for_status()?;
-
-        Ok(())
+            .send()
+            .unwrap()
+            .error_for_status()
+            .expect("Failed to create credentials");
     }
 
     /// Gets the ID of the original user from the referral code by requesting
@@ -157,42 +169,112 @@ impl DuoApi {
     /// the query string. It will then redirect again, which we don't want, so
     /// we instead disable all redirects and parse the URL we want from the
     /// location header.
-    pub fn get_user_id(&self, code: &str) -> Result<String, Error> {
+    pub fn get_user_id(&self, code: &str) -> String {
         let res = self
             .client
             .get(format!("{BASE_INVITE_URL}/{code}"))
-            .send()?;
+            .send()
+            .unwrap()
+            .error_for_status()
+            .expect("Failed to request invite link");
 
         let location_header = res.headers()["location"]
             .to_str()
-            .unwrap()
+            .expect("Failed to parse location header");
+
+        DuoApi::resolve_inviter_id(location_header)
+    }
+
+    /// Parse inviter ID from the "location" header of the response in [`DuoApi::get_user_id`].
+    pub fn resolve_inviter_id(location: &str) -> String {
+        let location_header = location
             // The duolingo URL we want is actually an encoded query string
             // value, so we apply basic decoding to get `inviter_id` into the
             // pairs detected by [`reqwest::Url::query_pairs`].
             .replace("%26", "&")
             .replace("%3D", "=");
 
-        let redirect_url = Url::parse(&location_header).unwrap();
+        let redirect_url = Url::parse(&location_header) //
+            .expect("Failed to parse location header URL");
+
         let query_params: HashMap<_, _> = redirect_url.query_pairs().into_owned().collect();
 
-        Ok(query_params["inviter_id"].to_owned())
+        query_params["inviter_id"].to_owned()
     }
 
     /// Finds out the additional number of free weeks of Plus available to the user.
-    pub fn check_invites_left(&self, data: &AccountData, code: &str) -> Result<u8, Error> {
+    pub fn check_invites_left(&self, data: &AccountData, code: &str) -> u8 {
         let url = format!(
             "{BASE_INVITE_URL}/user/{}/tiered-rewards/status",
-            self.get_user_id(code)?
+            self.get_user_id(code)
         );
 
         let res: InviteStatusResponse = self
             .client
             .get(url)
             .header(COOKIE, format!("jwt_token={}", data.token))
-            .send()?
-            .error_for_status()?
-            .json()?;
+            .send()
+            .unwrap()
+            .error_for_status()
+            .expect("Failed to get user invite status")
+            .json()
+            .expect("Failed to parse user invite status response");
 
-        Ok(res.num_weeks_available)
+        res.num_weeks_available
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn valid_code() {
+        let code = "A".repeat(26);
+        assert_eq!(DuoApi::parse_code(&code), Ok(code.to_string()));
+    }
+
+    #[test]
+    fn valid_link() {
+        let code = "A".repeat(26);
+        let link = format!("{BASE_INVITE_URL}/{code}");
+
+        assert_eq!(DuoApi::parse_code(&link), Ok(code));
+    }
+
+    #[test]
+    fn undercase_code() {
+        let code = "a".repeat(26);
+        assert_eq!(DuoApi::parse_code(&code), Ok(code.to_uppercase()));
+    }
+
+    #[test]
+    fn incorrect_length_code() {
+        let short_code = "A".repeat(25);
+        let long_code = "A".repeat(27);
+
+        assert!(DuoApi::parse_code(&short_code).is_err());
+        assert!(DuoApi::parse_code(&long_code).is_err());
+    }
+
+    #[test]
+    fn incorrect_characters_code() {
+        let code = "_".repeat(26);
+        assert!(DuoApi::parse_code(code.as_str()).is_err());
+    }
+
+    #[test]
+    fn resolve_inviter_id() {
+        // This is a real response header.
+        let location_header = "https://af4a.adj.st/?adjust_t=tj1xyo&adjust_label=BDHTZTB5CWWKTVW2UCDTY27MBE&adjust_fallback=https%3A%2F%2Fwww.duolingo.com%2Freferred%3Fuser_invite%3DBDHTZTB5CWWKTVW2UCDTY27MBE%26inviter_id%3D925130045&adjust_redirect_macos=https%3A%2F%2Fwww.duolingo.com%2Freferred%3Fuser_invite%3DBDHTZTB5CWWKTVW2UCDTY27MBE%26inviter_id%3D925130045&adjust_deeplink=duolingo%3A%2F%2Fprofile%3Fuser_id%3D925130045";
+        let inviter_id = String::from("925130045");
+
+        assert_eq!(DuoApi::resolve_inviter_id(location_header), inviter_id)
+    }
+
+    #[test]
+    #[should_panic]
+    fn resolve_inviter_id_with_invalid_url() {
+        DuoApi::resolve_inviter_id("...");
     }
 }

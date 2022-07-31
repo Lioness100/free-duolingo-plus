@@ -63,7 +63,7 @@ cargo install free-duolingo-plus
 
 Follow [these
 instructions](https://support.duolingo.com/hc/en-us/articles/4404225309581-How-does-the-referral-program-work-)
-to get your referral code.
+to get your referral link.
 
 ⚠️ **A VPN must used to run this as Duolingo will not
 consider accounts created with the same IP as the original towards the referral
@@ -71,9 +71,9 @@ program.** ⚠️
 
 ```sh
 free-duolingo-plus --help
-free-duolingo-plus --code="ASDFGHJKL1234567890QWERTY"
-free-duolingo-plus --code="ASDFGHJKL1234567890QWERTY" --num=3
-free-duolingo-plus -c="ASDFGHJKL1234567890QWERTY" --n=3
+free-duolingo-plus --code BDHTZTB5CWWKTVW2UCDTY27MBE
+free-duolingo-plus --code https://invite.duolingo.com/BDHTZTB5CWWKTVW2UCDTY27MBE
+free-duolingo-plus --code https://invite.duolingo.com/BDHTZTB5CWWKTVW2UCDTY27MBE --num 10
 ```
 
 Please ⭐ this repository if it works for you!

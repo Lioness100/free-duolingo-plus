@@ -1,29 +1,26 @@
 //! A simple CLI tool to create dummy accounts with referral links to give yourself
 //! free Plus (max 24/41 weeks).
 //!
-//! > ⚠️ A VPN must used to run this tool as Duolingo will not
+//! > **⚠️ A VPN must used to run this tool as Duolingo will not
 //! > consider accounts created with the same IP as the original towards the referral
-//! > program.
-//!
-//! > ⚠️ Use at your own risk.
+//! > program.**
 //!
 //! ## Usage
 //!
 //! Follow [these
 //! instructions](https://support.duolingo.com/hc/en-us/articles/4404225309581-How-does-the-referral-program-work-)
-//! to get your referral code.
+//! to get your referral link.
 //!
 //! ```sh
 //! free-duolingo-plus --help
-//! free-duolingo-plus --code="ASDFGHJKL1234567890QWERTY"
-//! free-duolingo-plus --code="ASDFGHJKL1234567890QWERTY" --num=3
-//! free-duolingo-plus -c="ASDFGHJKL1234567890QWERTY" --n=3
+//! free-duolingo-plus --code BDHTZTB5CWWKTVW2UCDTY27MBE
+//! free-duolingo-plus --code https://invite.duolingo.com/BDHTZTB5CWWKTVW2UCDTY27MBE
+//! free-duolingo-plus --code https://invite.duolingo.com/BDHTZTB5CWWKTVW2UCDTY27MBE --num 10
 //! ```
 
 use clap::{value_parser, AppSettings, Parser};
 use console::style;
 use indicatif::{ProgressBar, ProgressStyle};
-use reqwest::Error;
 
 pub mod duo_api;
 use crate::duo_api::DuoApi;
@@ -35,8 +32,8 @@ struct Args {
     #[clap(
         short,
         long,
-        help = "The referral code",
-        value_parser = DuoApi::is_valid_code
+        help = "The referral code or link",
+        value_parser = DuoApi::parse_code
     )]
     code: String,
 
@@ -51,12 +48,12 @@ struct Args {
 }
 
 /// CLI entrypoint.
-fn main() -> Result<(), Error> {
+fn main() {
     let args = Args::parse();
     let client = DuoApi::default();
 
-    let bar_style =
-        ProgressStyle::default_bar().template("[{elapsed_precise}] [{pos}/{len}] {bar:70.cyan}");
+    let bar_style = ProgressStyle::default_bar() //
+        .template("[{elapsed_precise}] [{pos}/{len}] {bar:70.cyan}");
 
     let bar = ProgressBar::new(args.num.into()).with_style(bar_style);
 
@@ -66,8 +63,8 @@ fn main() -> Result<(), Error> {
     while invites_left > 0 {
         // To setup an account, you first need to create it, and then send a
         // patch request to create credentials (which obviously won't be used).
-        let data = client.create_account(&args.code)?;
-        client.create_credentials(&data)?;
+        let data = client.create_account(&args.code);
+        client.create_credentials(&data);
 
         accounts_created += 1;
         invites_left -= 1;
@@ -77,7 +74,7 @@ fn main() -> Result<(), Error> {
         // safety check. This is only necessary to do once. If the user only
         // wanted one invite, this isn't necessary at all.
         if accounts_created == 1 && invites_left > 0 {
-            let num_weeks_available = client.check_invites_left(&data, &args.code)?;
+            let num_weeks_available = client.check_invites_left(&data, &args.code);
 
             if num_weeks_available < invites_left {
                 invites_left = num_weeks_available;
@@ -102,6 +99,4 @@ fn main() -> Result<(), Error> {
         style(accounts_created).green().bold(),
         style("https://www.duolingo.com/").dim()
     );
-
-    Ok(())
 }
