@@ -116,7 +116,7 @@ impl DuoApi {
     /// converted to uppercase.
     pub fn parse_code(code: &str) -> Result<String, String> {
         let parsed_code = code.replace(&format!("{BASE_INVITE_URL}/"), "");
-        if parsed_code.len() == 26 && parsed_code.chars().all(|c| c.is_ascii_alphanumeric()) {
+        if parsed_code.len() == 26 && parsed_code.chars().all(|char| char.is_ascii_alphanumeric()) {
             Ok(parsed_code.to_uppercase())
         } else {
             Err(String::from("Invalid referral code/link"))
