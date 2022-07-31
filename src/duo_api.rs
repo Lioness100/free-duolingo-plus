@@ -69,11 +69,11 @@ pub struct AccountData {
     token: String,
 }
 
-impl AccountData {
+impl From<Response> for AccountData {
     /// Finds the JWT token from the request to be reused on the next request as
     /// a form of authentication, and then deserializes the response as JSON to
     /// retrieve the user id.
-    pub fn from(res: Response) -> Self {
+    fn from(res: Response) -> Self {
         let token = res.headers()["jwt"]
             .to_str()
             .expect("JWT token was not found in the account creation response headers")
@@ -142,7 +142,7 @@ impl DuoApi {
             .error_for_status()
             .expect("Failed to create account");
 
-        AccountData::from(res)
+        res.into()
     }
 
     /// Creates credentials for the user (see [`UserCredentialsData`]) from [`AccountData`].
