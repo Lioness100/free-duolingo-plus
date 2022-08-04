@@ -20,7 +20,7 @@
 
 use clap::{value_parser, AppSettings, Parser};
 use console::style;
-use indicatif::{ProgressBar, ProgressIterator, ProgressStyle};
+use indicatif::{ProgressIterator, ProgressStyle};
 
 pub mod duo_api;
 use crate::duo_api::DuoApi;
@@ -53,11 +53,10 @@ fn main() {
     let client = DuoApi::default();
 
     let bar_style = ProgressStyle::default_bar() //
-        .template("[{elapsed_precise}] [{pos}/{len}] {bar:70.cyan}");
+        .template("[{elapsed_precise}] [{pos}/{len}] {bar:70.cyan}")
+        .unwrap();
 
-    let bar = ProgressBar::new(args.num.into()).with_style(bar_style);
-
-    for _ in ProgressIterator::progress_with(1..=args.num, bar) {
+    for _ in (1..=args.num).progress_with_style(bar_style) {
         let data = client.create_account(&args.code);
         client.create_credentials(&data);
     }
