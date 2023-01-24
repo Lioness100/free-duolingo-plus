@@ -49,7 +49,7 @@ reward system](https://user-images.githubusercontent.com/65814829/180666541-8cea
 > _🎉 If you wouldn't like to go through the installation process, you can
 > [create an
 > issue](https://github.com/Lioness100/free-duolingo-plus/issues/new?assignees=Lioness100&labels=&template=enter-your-referral-code-link.md&title=Remote+CLI+Usage+Request)
-> or reach out to me on Discord (@Lioness100#4566) and I will run the tool on
+> or reach out to me on Discord (@Lioness100#9258) and I will run the tool on
 > your behalf._
 
 Install [Rust](https://www.rust-lang.org/tools/install) using the recommended
