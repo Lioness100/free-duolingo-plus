@@ -15,26 +15,49 @@ use uuid::Uuid;
 /// The API used to create and patch users. This specific API version is the
 /// only one that supports this strategy.
 pub const BASE_USERS_URL: &str = "https://www.duolingo.com/2017-06-30/users";
+pub const RECAPTCHA_SIGNAL_SIT_KEY: &str = "6LcLOdsjAAAAAFfwGusLLnnn492SOGhsCh-uEAvI";
+
+/// Data used to bypass the reCAPTCHA check.
+#[derive(Serialize)]
+pub struct UserCreationSignal {
+    site_key: String,
+    token: String,
+    vendor: u8,
+}
+
+impl Default for UserCreationSignal {
+    /// Creates a new [`UserCreationSignal`] with the default values.
+    fn default() -> Self {
+        Self {
+            site_key: RECAPTCHA_SIGNAL_SIT_KEY.to_string(),
+            // At the moment, Duo doesn't check this value.
+            token: String::from("-"),
+            vendor: 2,
+        }
+    }
+}
 
 /// The data sent to the API to create a user. `timezone` and `from_language`
 /// are dummy values, but `invite_code` is the provided code and `distinct_id`
 /// is a UUIDv4.
-#[derive(Serialize)]
+#[derive(Serialize, Default)]
 #[serde(rename_all = "camelCase")]
 pub struct UserCreationData {
     timezone: String,
     from_language: String,
     invite_code: String,
     distinct_id: String,
+    signal: UserCreationSignal,
 }
 
 /// The data sent to the API to create credentials. All 3 of these fields are
 /// dummy values.
-#[derive(Serialize)]
+#[derive(Serialize, Default)]
 pub struct UserCredentialsData {
     email: String,
     password: String,
     age: String,
+    signal: UserCreationSignal,
 }
 
 /// The data returned from the API after creating the user with
@@ -115,6 +138,7 @@ impl DuoApi {
             from_language: String::from("en"),
             invite_code: code.to_string(),
             distinct_id: Uuid::new_v4().to_string(),
+            ..Default::default()
         };
 
         let res = self
@@ -135,10 +159,11 @@ impl DuoApi {
             age: String::from("5"),
             email: FreeEmail().fake(),
             password: Password(15..16).fake(),
+            ..Default::default()
         };
 
         self.client
-            .patch(format!("{BASE_USERS_URL}/{}?fields=none", data.id))
+            .patch(format!("{BASE_USERS_URL}/{}?fields=email,identifier,name,username", data.id))
             .header(COOKIE, format!("jwt_token={}", data.token))
             .json(&user_data)
             .send()

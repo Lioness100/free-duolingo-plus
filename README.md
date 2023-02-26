@@ -35,6 +35,13 @@ Plus!"'
     width="153.5"
     height="358.5"
   />
+  <img
+    alt='"You earned 24 weeks of free Duolingo
+Plus!"'
+    src="https://user-images.githubusercontent.com/65814829/221414779-bb71d51f-36d3-46cf-bd7f-40e602492dd6.png"
+    width="153.5"
+    height="358.5"
+  />
 </div>
 <br />
 
@@ -43,6 +50,9 @@ Plus!"'
 A simple CLI tool to create dummy accounts with referral links to give yourself
 free Plus (max 24/41 weeks depending on whether you're part of the [tiered
 reward system](https://user-images.githubusercontent.com/65814829/180666541-8ceac559-37d8-4e5b-86f4-05b8b265b3b6.png)).
+
+Working as of February 26th, 2023. Please create a pull request to update this
+date if this tool works/doesn't work for you.
 
 ## Installation
 
