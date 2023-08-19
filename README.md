@@ -51,7 +51,7 @@ A simple CLI tool to create dummy accounts with referral links to give yourself
 free Plus (max 24/41 weeks depending on whether you're part of the [tiered
 reward system](https://user-images.githubusercontent.com/65814829/180666541-8ceac559-37d8-4e5b-86f4-05b8b265b3b6.png)).
 
-**NOT WORKING** as of March 1th, 2023. I'm currently looking into this issue.
+**NOT WORKING** as of March 1st, 2023. I'm currently looking into this issue.
 > Please create a pull request to update this date if this tool works/doesn't work for you.
 
 ## Installation
